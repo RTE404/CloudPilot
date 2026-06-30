@@ -1,0 +1,16 @@
+servers: 4
+episode_length: 500
+cpu_capacity: 100.0
+memory_capacity: 32.0
+min_job_cpu: 10.0
+max_job_cpu: 60.0
+min_job_memory: 1.0
+max_job_memory: 8.0
+min_job_duration: 2
+max_job_duration: 20
+seed: 42
+training_timesteps: 100000
+evaluation_episodes: 100
+simulation_speed: 2.0
+results_dir: results
+models_dir: models
