@@ -7,11 +7,11 @@ React + TypeScript live operations dashboard.
 
 ## What It Does
 
-- Simulates a 4-server homogeneous cloud cluster.
-- Generates one incoming job per simulation step.
-- Assigns jobs using Random, Round Robin, Least Loaded, or PPO.
+- Simulates a 4-server heterogeneous cloud cluster (large, medium, small servers).
+- Generates incoming jobs with strict SLA deadlines and Priority Tiers (Gold, Silver, Bronze).
+- Assigns jobs using Random, Round Robin, Least Loaded, Priority Least Loaded, or PPO.
 - Streams live server state, scheduling decisions, KPIs, charts, and heatmaps.
-- Trains and evaluates a PPO scheduler against baseline algorithms.
+- Trains and evaluates a PPO scheduler against baseline algorithms on a complex multi-objective reward function (penalizing SLA violations, rejections, and overloads).
 
 ## Architecture
 
@@ -123,12 +123,9 @@ evaluation episodes.
 
 TODO:
 
-- Heterogeneous servers
 - Autoscaling
 - Energy-aware scheduling
 - GPU scheduling
-- SLA-aware scheduling
-- Priority queues
 - Bursty traffic
 - Multi-agent RL
 - Kubernetes-inspired scheduling
