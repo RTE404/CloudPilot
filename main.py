@@ -44,7 +44,7 @@ def main() -> None:
                 "Frontend dependencies are missing. Run `npm install` in "
                 "the frontend directory, then run `python main.py` again."
             )
-        frontend = subprocess.Popen(["npm", "run", "dev"], cwd=frontend_dir)
+        frontend = subprocess.Popen(["npm.cmd", "run", "dev"], cwd=frontend_dir)
         processes.append(frontend)
 
     print("CloudPilot backend: http://127.0.0.1:8000")

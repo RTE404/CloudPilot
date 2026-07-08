@@ -4,6 +4,8 @@ export interface JobState {
   memory_required: number;
   runtime: number;
   arrival_time: number;
+  priority_tier: string;
+  deadline_ticks: number;
   remaining_time: number | null;
 }
 
@@ -27,6 +29,8 @@ export interface MetricsState {
   average_memory_utilization: number;
   current_reward: number;
   episode_reward: number;
+  sla_violation_rate: number;
+  priority_weighted_completion_rate: number;
 }
 
 export interface DecisionState {

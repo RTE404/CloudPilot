@@ -1,0 +1,53 @@
+cluster:
+  servers:
+    - { id: "A", class: "large",  cpu_capacity: 16, mem_capacity: 64 }
+    - { id: "B", class: "medium", cpu_capacity: 8,  mem_capacity: 32 }
+    - { id: "C", class: "medium", cpu_capacity: 8,  mem_capacity: 32 }
+    - { id: "D", class: "small",  cpu_capacity: 4,  mem_capacity: 16 }
+
+priority:
+  distribution:            
+    gold: 0.15
+    silver: 0.35
+    bronze: 0.50
+  deadline_ticks:           
+    gold:   [3, 5]
+    silver: [5, 10]
+    bronze: [10, 20]
+  queue_retry_order: "priority_fifo"
+
+reward:
+  completion_base: 1.0
+  tier_weights:
+    gold: 3.0
+    silver: 2.0
+    bronze: 1.0
+  sla_violation_penalty: -2.0
+  overload_penalty_per_unit: -0.5
+  rejection_penalty_base: -1.0
+  queue_penalty_per_job_per_tick: -0.01
+  balance_bonus_weight: 0.2
+  starvation_guard:
+    threshold_ticks: 15
+    bonus_per_tick_over: 0.05
+    cap: 1.0
+
+normalization:
+  max_job_cpu: 8
+  max_job_mem: 32
+  max_runtime: 50
+  max_queue_length: 20
+
+episode_length: 500
+min_job_cpu: 1.0
+max_job_cpu: 8.0
+min_job_memory: 1.0
+max_job_memory: 32.0
+min_job_duration: 2
+max_job_duration: 50
+seed: 42
+training_timesteps: 100000
+evaluation_episodes: 100
+simulation_speed: 2.0
+results_dir: results/v1.5
+models_dir: models

@@ -43,11 +43,18 @@ export function ServerGrid({ servers, selectedServer }: ServerGridProps) {
           </div>
 
           <div className="mt-4 flex min-h-9 flex-wrap gap-1">
-            {server.running_jobs.slice(0, 8).map((job) => (
-              <span key={job.job_id} className="job-chip">
-                #{job.job_id}
-              </span>
-            ))}
+            {server.running_jobs.slice(0, 8).map((job) => {
+              let tierClass = "bg-slate-100 text-slate-700";
+              if (job.priority_tier === "gold") tierClass = "bg-yellow-100 text-yellow-800 border-yellow-300 border";
+              if (job.priority_tier === "silver") tierClass = "bg-slate-200 text-slate-800 border-slate-400 border";
+              if (job.priority_tier === "bronze") tierClass = "bg-orange-100 text-orange-800 border-orange-300 border";
+              
+              return (
+                <span key={job.job_id} className={`job-chip ${tierClass}`}>
+                  #{job.job_id}
+                </span>
+              );
+            })}
           </div>
         </article>
       ))}

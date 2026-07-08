@@ -13,12 +13,14 @@ const metricMap: Array<[keyof MetricsState, string, (value: number) => string]> 
   ["average_cpu_utilization", "Avg CPU", (value) => `${Math.round(value * 100)}%`],
   ["average_memory_utilization", "Avg Memory", (value) => `${Math.round(value * 100)}%`],
   ["current_reward", "Reward", (value) => value.toFixed(1)],
-  ["episode_reward", "Episode Reward", (value) => value.toFixed(1)]
+  ["episode_reward", "Episode Reward", (value) => value.toFixed(1)],
+  ["sla_violation_rate", "SLA Violations", (value) => `${(value * 100).toFixed(1)}%`],
+  ["priority_weighted_completion_rate", "Prio Completion", (value) => `${(value * 100).toFixed(1)}%`]
 ];
 
 export function MetricsPanel({ metrics }: MetricsPanelProps) {
   return (
-    <section className="grid gap-3 sm:grid-cols-3 xl:grid-cols-9">
+    <section className="grid gap-3 sm:grid-cols-3 xl:grid-cols-11">
       {metricMap.map(([key, label, format]) => (
         <div key={key} className="metric-tile min-h-20">
           <span>{label}</span>

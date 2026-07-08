@@ -36,9 +36,16 @@ def plot_evaluation_metrics(summary: pd.DataFrame, results_dir: str | Path) -> N
         "average_cpu_utilization": "CPU Utilization",
         "average_memory_utilization": "Memory Utilization",
         "episode_reward": "Scheduler Comparison",
+        "sla_violation_rate": "SLA Violation Rate",
+        "priority_weighted_completion_rate": "Priority-Weighted Completion Rate",
+        "max_wait_gold": "Max Wait (Gold)",
+        "max_wait_silver": "Max Wait (Silver)",
+        "max_wait_bronze": "Max Wait (Bronze)",
     }
 
     for metric, title in metric_titles.items():
+        if metric not in summary.columns:
+            continue
         output = Path(results_dir) / f"{metric}.png"
         plt.figure(figsize=(9, 5))
         plt.bar(summary["scheduler"], summary[metric])

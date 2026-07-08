@@ -9,8 +9,23 @@ from stable_baselines3.common.monitor import Monitor
 
 from environment.cloud_env import CloudResourceEnv
 from rl.model import build_ppo_model
-from utils.helpers import AppConfig
+from utils.helpers import AppConfigV1_5, load_config_v1_5
 from visualization.plots import plot_training_reward
+
+
+class TensorboardCallback(BaseCallback):
+    """Log separate reward components to TensorBoard."""
+    def _on_step(self) -> bool:
+        for info in self.locals.get("infos", []):
+            if "completion" in info:
+                self.logger.record("reward_components/completion", info["completion"])
+                self.logger.record("reward_components/sla_violation", info["sla_violation"])
+                self.logger.record("reward_components/rejection", info["rejection"])
+                self.logger.record("reward_components/overload", info["overload"])
+                self.logger.record("reward_components/queue", info["queue"])
+                self.logger.record("reward_components/balance", info["balance"])
+                self.logger.record("reward_components/starvation_bonus", info.get("starvation_bonus", 0.0))
+        return True
 
 
 class RichTrainingCallback(BaseCallback):
@@ -46,7 +61,7 @@ class RichTrainingCallback(BaseCallback):
         return True
 
 
-def train_agent(config: AppConfig, console: Console) -> Path:
+def train_agent(config: AppConfigV1_5, console: Console) -> Path:
     """Train PPO and save final/best models and monitor logs."""
     models_dir = Path(config.models_dir)
     results_dir = Path(config.results_dir)
@@ -57,7 +72,7 @@ def train_agent(config: AppConfig, console: Console) -> Path:
 
     train_env = Monitor(CloudResourceEnv(config), filename=str(log_dir / "monitor.csv"))
     eval_env = Monitor(CloudResourceEnv(config))
-    model = build_ppo_model(train_env, config.seed)
+    model = build_ppo_model(train_env, config.seed, tensorboard_log=str(log_dir / "tensorboard"))
     eval_callback = EvalCallback(
         eval_env,
         best_model_save_path=str(best_dir),
@@ -67,13 +82,14 @@ def train_agent(config: AppConfig, console: Console) -> Path:
         render=False,
     )
     rich_callback = RichTrainingCallback(console)
+    tb_callback = TensorboardCallback()
 
     console.print(
         f"[bold]Training PPO[/bold] for {config.training_timesteps:,} timesteps"
     )
     model.learn(
         total_timesteps=config.training_timesteps,
-        callback=[rich_callback, eval_callback],
+        callback=[tb_callback, rich_callback, eval_callback],
     )
 
     final_model_path = models_dir / "ppo_final"

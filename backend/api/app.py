@@ -9,9 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.schemas import ControlRequest, SimulationState, TrainingState
 from backend.api.simulation import LiveSimulation
-from utils.helpers import load_config
+from utils.helpers import load_config_v1_5
 
-config = load_config()
+config = load_config_v1_5()
 simulation = LiveSimulation(config)
 
 app = FastAPI(title="CloudPilot API", version="2.0.0")

@@ -9,30 +9,34 @@ from environment.job import Job
 class Server:
     """A simple server with finite CPU and memory capacity."""
 
-    id: int
-    cpu_capacity: float
-    memory_capacity: float
-    current_cpu: float = 0.0
-    current_memory: float = 0.0
+    id: int | str
+    capacity: dict[str, float]
+    used: dict[str, float] = field(default_factory=lambda: {"cpu": 0.0, "memory": 0.0})
     queue: list[Job] = field(default_factory=list)
     running_jobs: list[Job] = field(default_factory=list)
 
+    def __post_init__(self):
+        # Initialize used with keys from capacity if not already present
+        for key in self.capacity:
+            if key not in self.used:
+                self.used[key] = 0.0
+
     def reset(self) -> None:
         """Clear all usage and queued/running jobs."""
-        self.current_cpu = 0.0
-        self.current_memory = 0.0
+        for key in self.used:
+            self.used[key] = 0.0
         self.queue.clear()
         self.running_jobs.clear()
 
     @property
     def cpu_utilization(self) -> float:
         """Return CPU utilization in [0, 1]."""
-        return self.current_cpu / self.cpu_capacity
+        return self.used.get("cpu", 0.0) / self.capacity.get("cpu", 1.0)
 
     @property
     def memory_utilization(self) -> float:
         """Return memory utilization in [0, 1]."""
-        return self.current_memory / self.memory_capacity
+        return self.used.get("memory", 0.0) / self.capacity.get("memory", 1.0)
 
     @property
     def load_score(self) -> float:
@@ -46,8 +50,8 @@ class Server:
     def can_run(self, job: Job) -> bool:
         """Return True when the job fits on currently available resources."""
         return (
-            self.current_cpu + job.cpu_required <= self.cpu_capacity
-            and self.current_memory + job.memory_required <= self.memory_capacity
+            self.used.get("cpu", 0.0) + job.cpu_required <= self.capacity.get("cpu", 0.0)
+            and self.used.get("memory", 0.0) + job.memory_required <= self.capacity.get("memory", 0.0)
         )
 
     def accept_job(self, job: Job, current_time: int) -> bool:
@@ -56,8 +60,8 @@ class Server:
             return False
 
         job.start_time = current_time
-        self.current_cpu += job.cpu_required
-        self.current_memory += job.memory_required
+        self.used["cpu"] = self.used.get("cpu", 0.0) + job.cpu_required
+        self.used["memory"] = self.used.get("memory", 0.0) + job.memory_required
         self.running_jobs.append(job)
         return True
 
@@ -70,8 +74,8 @@ class Server:
             job.remaining_time -= 1
             if job.remaining_time <= 0:
                 job.completion_time = current_time
-                self.current_cpu -= job.cpu_required
-                self.current_memory -= job.memory_required
+                self.used["cpu"] -= job.cpu_required
+                self.used["memory"] -= job.memory_required
                 completed_jobs.append(job)
             else:
                 still_running.append(job)

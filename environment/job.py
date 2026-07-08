@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+from environment.priority import PriorityTier
+
 
 @dataclass(slots=True)
 class Job:
@@ -12,6 +14,9 @@ class Job:
     memory_required: float
     duration: int
     arrival_time: int
+    priority_tier: PriorityTier
+    deadline_ticks: int
+    ticks_waited: int = 0
     remaining_time: int = field(init=False)
     start_time: int | None = None
     completion_time: int | None = None

@@ -183,15 +183,17 @@ class LiveSimulation:
 
     def _metrics_state(self) -> MetricsState:
         return MetricsState(
-            jobs_processed=int(self.info["accepted_jobs"] + self.info["rejected_jobs"]),
-            jobs_completed=int(self.info["completed_jobs"]),
-            jobs_rejected=int(self.info["rejected_jobs"]),
-            average_response_time=float(self.info["average_response_time"]),
-            average_queue_length=float(self.info["average_queue_length"]),
-            average_cpu_utilization=float(self.info["average_cpu_utilization"]),
-            average_memory_utilization=float(self.info["average_memory_utilization"]),
+            jobs_processed=int(self.info.get("accepted_jobs", 0) + self.info.get("rejected_jobs", 0)),
+            jobs_completed=int(self.info.get("completed_jobs", 0)),
+            jobs_rejected=int(self.info.get("rejected_jobs", 0)),
+            average_response_time=float(self.info.get("average_response_time", 0.0)),
+            average_queue_length=float(self.info.get("average_queue_length", 0.0)),
+            average_cpu_utilization=float(self.info.get("average_cpu_utilization", 0.0)),
+            average_memory_utilization=float(self.info.get("average_memory_utilization", 0.0)),
             current_reward=float(self.info.get("reward", 0.0)),
-            episode_reward=float(self.info["episode_reward"]),
+            episode_reward=float(self.info.get("episode_reward", 0.0)),
+            sla_violation_rate=float(self.info.get("sla_violation_rate", 0.0)),
+            priority_weighted_completion_rate=float(self.info.get("priority_weighted_completion_rate", 0.0)),
         )
 
     @staticmethod
@@ -204,6 +206,8 @@ class LiveSimulation:
             memory_required=job.memory_required,
             runtime=job.duration,
             arrival_time=job.arrival_time,
+            priority_tier=job.priority_tier.value if hasattr(job, "priority_tier") else "bronze",
+            deadline_ticks=job.deadline_ticks if hasattr(job, "deadline_ticks") else 0,
             remaining_time=getattr(job, "remaining_time", None),
         )
 

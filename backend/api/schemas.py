@@ -11,6 +11,8 @@ class JobState(BaseModel):
     memory_required: float
     runtime: int
     arrival_time: int
+    priority_tier: str = "bronze"
+    deadline_ticks: int = 0
     remaining_time: int | None = None
 
 
@@ -38,6 +40,8 @@ class MetricsState(BaseModel):
     average_memory_utilization: float
     current_reward: float
     episode_reward: float
+    sla_violation_rate: float
+    priority_weighted_completion_rate: float
 
 
 class DecisionState(BaseModel):

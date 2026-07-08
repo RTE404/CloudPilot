@@ -1,7 +1,7 @@
 """Evaluation helpers for PPO and baseline schedulers."""
 
-from collections.abc import Protocol
 from pathlib import Path
+from typing import Protocol
 
 import pandas as pd
 from rich.console import Console
@@ -11,9 +11,10 @@ from stable_baselines3 import PPO
 from environment.cloud_env import CloudResourceEnv
 from metrics.metrics import aggregate_metrics, summarize_episode
 from schedulers.least_loaded import LeastLoadedScheduler
+from schedulers.priority_least_loaded import PriorityLeastLoadedScheduler
 from schedulers.random_scheduler import RandomScheduler
 from schedulers.round_robin import RoundRobinScheduler
-from utils.helpers import AppConfig
+from utils.helpers import AppConfigV1_5
 from visualization.plots import plot_evaluation_metrics
 
 
@@ -26,13 +27,14 @@ class Scheduler(Protocol):
         """Return a valid action for the current environment."""
 
 
-def evaluate_all(config: AppConfig, model_path: str | Path, console: Console) -> pd.DataFrame:
+def evaluate_all(config: AppConfigV1_5, model_path: str | Path, console: Console) -> pd.DataFrame:
     """Evaluate baselines and PPO, save CSVs and plots, and return a summary."""
     rows: list[dict[str, float | int | str]] = []
     schedulers: list[Scheduler] = [
         RandomScheduler(config.seed),
         RoundRobinScheduler(),
         LeastLoadedScheduler(),
+        PriorityLeastLoadedScheduler(),
     ]
 
     for scheduler in schedulers:
@@ -52,13 +54,22 @@ def evaluate_all(config: AppConfig, model_path: str | Path, console: Console) ->
 
 
 def _evaluate_scheduler(
-    config: AppConfig,
+    config: AppConfigV1_5,
     scheduler: Scheduler,
 ) -> list[dict[str, float | int | str]]:
     rows: list[dict[str, float | int | str]] = []
+    
+    # Store original retry order
+    original_retry_order = getattr(config.priority, "queue_retry_order", "priority_fifo")
+
     for episode in range(config.evaluation_episodes):
         if hasattr(scheduler, "reset"):
             scheduler.reset()
+
+        if scheduler.name == "Least Loaded":
+            config.priority.queue_retry_order = "fifo"
+        else:
+            config.priority.queue_retry_order = "priority_fifo"
 
         env = CloudResourceEnv(config)
         _, info = env.reset(seed=config.seed + episode)
@@ -70,14 +81,19 @@ def _evaluate_scheduler(
             _, _, terminated, truncated, info = env.step(action)
 
         rows.append(summarize_episode(scheduler.name, episode, info))
+        
+    config.priority.queue_retry_order = original_retry_order
     return rows
 
 
 def _evaluate_ppo(
-    config: AppConfig,
+    config: AppConfigV1_5,
     model: PPO,
 ) -> list[dict[str, float | int | str]]:
     rows: list[dict[str, float | int | str]] = []
+    original_retry_order = getattr(config.priority, "queue_retry_order", "priority_fifo")
+    config.priority.queue_retry_order = "priority_fifo"
+
     for episode in range(config.evaluation_episodes):
         env = CloudResourceEnv(config)
         observation, info = env.reset(seed=config.seed + episode)
@@ -89,6 +105,8 @@ def _evaluate_ppo(
             observation, _, terminated, truncated, info = env.step(int(action))
 
         rows.append(summarize_episode("PPO Agent", episode, info))
+        
+    config.priority.queue_retry_order = original_retry_order
     return rows
 
 
@@ -99,13 +117,9 @@ def _print_summary(summary: pd.DataFrame, console: Console) -> None:
 
     for _, row in summary.iterrows():
         table.add_row(
-            str(row["scheduler"]),
-            f"{row['average_response_time']:.2f}",
-            f"{row['average_queue_length']:.2f}",
-            f"{row['successful_jobs']:.2f}",
-            f"{row['rejected_jobs']:.2f}",
-            f"{row['average_cpu_utilization']:.3f}",
-            f"{row['average_memory_utilization']:.3f}",
-            f"{row['episode_reward']:.2f}",
+            *[
+                f"{val:.3f}" if isinstance(val, float) else str(val)
+                for val in row
+            ]
         )
     console.print(table)
